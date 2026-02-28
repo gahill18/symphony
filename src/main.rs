@@ -1,8 +1,8 @@
-use std::error::Error;
 use std::fs;
-use std::path::{Path, PathBuf};
+use std::path::PathBuf;
 
 use clap::Parser;
+use reqwest::get;
 use serde::{Deserialize, Serialize};
 
 #[derive(Parser, Debug)]
@@ -16,17 +16,22 @@ struct Config {
     source_url: String,
 }
 
-fn read_config_file(file_path: &Path) -> Result<String, Box<dyn Error>> {
-    let contents = fs::read_to_string(file_path)?;
-    Ok(contents)
+impl Config {
+    fn from_path_string(ps: String) -> Config {
+        let conf_contents: String = fs::read_to_string(&PathBuf::from(ps)).unwrap();
+        let deserialized_config: Config = serde_json::from_str(&conf_contents).unwrap();
+        return deserialized_config;
+    }
 }
 
 fn main() {
     let args: Args = Args::parse();
-    let conf_path: String = args.config_path.unwrap();
-    let conf_contents: String = read_config_file(&PathBuf::from(conf_path)).unwrap();
-    let deserialized_config: Config = serde_json::from_str(&conf_contents).unwrap();
+    let conf_path_string: String = args.config_path.unwrap();
+    let deserialized_config: Config = Config::from_path_string(conf_path_string);
     println!("{:?}", deserialized_config);
+
+    let response = reqwest::blocking::get(deserialized_config.source_url);
+    println!("{:?}", response)
 }
 
 mod tests {
