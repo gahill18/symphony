@@ -30,8 +30,10 @@ fn main() {
     let deserialized_config: Config = Config::from_path_string(conf_path_string);
     println!("{:?}", deserialized_config);
 
-    let response = reqwest::blocking::get(deserialized_config.source_url);
-    println!("{:?}", response);
+    let response = reqwest::blocking::get(deserialized_config.source_url).unwrap();
+    if response.status() == 200 {
+        println!("{:?}", response.text().unwrap());
+    }
 }
 
 mod tests {
