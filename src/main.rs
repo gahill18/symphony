@@ -31,7 +31,7 @@ fn main() {
     println!("{:?}", deserialized_config);
 
     let response = reqwest::blocking::get(deserialized_config.source_url);
-    println!("{:?}", response)
+    println!("{:?}", response);
 }
 
 mod tests {
