@@ -1,8 +1,8 @@
 use std::fs;
 use std::path::PathBuf;
+use std::process::Command;
 
 use clap::Parser;
-use reqwest::get;
 use serde::{Deserialize, Serialize};
 
 #[derive(Parser, Debug)]
@@ -24,22 +24,41 @@ impl Config {
     }
 }
 
+#[derive(Debug)]
+struct Script {
+    cmds: Vec<Command>,
+}
+
+impl Script {
+    fn from_source_url(src_url: String) -> Script {
+        let response = reqwest::blocking::get(src_url).unwrap();
+        let lines: Vec<&str> = if response.status() != 200 {
+            String::new()
+        } else {
+            response.text().unwrap()
+        }
+        .lines()
+        .collect();
+
+        let cmds: Vec<Command> = Vec::new();
+        if response.status() == 200 {
+            // TODO: Async Child Process Spawn
+            let output = Command::new("sh")
+                .arg("-c")
+                .arg(response.text().unwrap())
+                .output()
+                .expect("failed");
+            println!("{:?}", output);
+        }
+        todo!("Return vector of commands")
+    }
+}
+
 fn main() {
     let args: Args = Args::parse();
     let conf_path_string: String = args.config_path.unwrap();
     let deserialized_config: Config = Config::from_path_string(conf_path_string);
-    println!("{:?}", deserialized_config);
-
-    let response = reqwest::blocking::get(deserialized_config.source_url).unwrap();
-    if response.status() == 200 {
-        // TODO: Async Child Process Spawn
-        let output = std::process::Command::new("sh")
-            .arg("-c")
-            .arg(response.text().unwrap())
-            .output()
-            .expect("failed");
-        println!("{:?}", output);
-    }
+    let script = Script::from_source_url(deserialized_config.source_url);
 }
 
 mod tests {
