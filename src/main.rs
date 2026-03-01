@@ -30,27 +30,37 @@ struct Script {
 }
 
 impl Script {
+    /* Use a Command to build a Script object from a list of strings */
+    fn from_lines(lines: Vec<&str>) -> Script {
+        let mut cmds: Vec<Command> = Vec::new();
+        for l in lines {
+            // TODO: Support non-sh scripts
+            // TODO: Async Child Process Spawn
+            // TODO: Push Command obj to cmds
+            cmds.push(Command::new("sh"));
+            let output = Command::new("sh")
+                .arg("-c")
+                .arg(l)
+                .output()
+                .expect("failed");
+            println!("Command Output of {}: {:?}", l, output);
+            // cmds.push(cmd);
+        }
+        return Script { cmds };
+    }
+
+    /*
+    Use HTTP Get to build a Script object from a source URL argument
+    */
     fn from_source_url(src_url: String) -> Script {
         let response = reqwest::blocking::get(src_url).unwrap();
-        let lines: Vec<&str> = if response.status() != 200 {
+        let text: String = if response.status() != 200 {
             String::new()
         } else {
             response.text().unwrap()
-        }
-        .lines()
-        .collect();
-
-        let cmds: Vec<Command> = Vec::new();
-        if response.status() == 200 {
-            // TODO: Async Child Process Spawn
-            let output = Command::new("sh")
-                .arg("-c")
-                .arg(response.text().unwrap())
-                .output()
-                .expect("failed");
-            println!("{:?}", output);
-        }
-        todo!("Return vector of commands")
+        };
+        let lines: Vec<&str> = text.lines().collect();
+        Script::from_lines(lines)
     }
 }
 
@@ -59,6 +69,7 @@ fn main() {
     let conf_path_string: String = args.config_path.unwrap();
     let deserialized_config: Config = Config::from_path_string(conf_path_string);
     let script = Script::from_source_url(deserialized_config.source_url);
+    println!("Script Object: {:?}", script)
 }
 
 mod tests {
