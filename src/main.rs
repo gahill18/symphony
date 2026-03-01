@@ -1,6 +1,6 @@
-use std::error::Error;
 use std::fs;
-use std::path::{Path, PathBuf};
+use std::path::PathBuf;
+use std::process::Command;
 
 use clap::Parser;
 use serde::{Deserialize, Serialize};
@@ -16,17 +16,60 @@ struct Config {
     source_url: String,
 }
 
-fn read_config_file(file_path: &Path) -> Result<String, Box<dyn Error>> {
-    let contents = fs::read_to_string(file_path)?;
-    Ok(contents)
+impl Config {
+    fn from_path_string(ps: String) -> Config {
+        let conf_contents: String = fs::read_to_string(&PathBuf::from(ps)).unwrap();
+        let deserialized_config: Config = serde_json::from_str(&conf_contents).unwrap();
+        return deserialized_config;
+    }
+}
+
+#[derive(Debug)]
+struct Script {
+    cmds: Vec<Command>,
+}
+
+impl Script {
+    /* Use a Command to build a Script object from a list of strings */
+    fn from_lines(lines: Vec<&str>) -> Script {
+        let mut cmds: Vec<Command> = Vec::new();
+        for l in lines {
+            // TODO: Support non-sh scripts
+            // TODO: Async Child Process Spawn
+            // TODO: Push Command obj to cmds
+            cmds.push(Command::new("sh"));
+            let output = Command::new("sh")
+                .arg("-c")
+                .arg(l)
+                .output()
+                .expect("failed");
+            println!("Command Output of {}: {:?}", l, output);
+            // cmds.push(cmd);
+        }
+        return Script { cmds };
+    }
+
+    /*
+    Use HTTP Get to build a Script object from a source URL argument
+    */
+    fn from_source_url(src_url: String) -> Script {
+        let response = reqwest::blocking::get(src_url).unwrap();
+        let text: String = if response.status() != 200 {
+            String::new()
+        } else {
+            response.text().unwrap()
+        };
+        let lines: Vec<&str> = text.lines().collect();
+        Script::from_lines(lines)
+    }
 }
 
 fn main() {
     let args: Args = Args::parse();
-    let conf_path: String = args.config_path.unwrap();
-    let conf_contents: String = read_config_file(&PathBuf::from(conf_path)).unwrap();
-    let deserialized_config: Config = serde_json::from_str(&conf_contents).unwrap();
-    println!("{:?}", deserialized_config);
+    let conf_path_string: String = args.config_path.unwrap();
+    let deserialized_config: Config = Config::from_path_string(conf_path_string);
+    let script = Script::from_source_url(deserialized_config.source_url);
+    println!("Script Object: {:?}", script)
 }
 
 mod tests {
