@@ -26,5 +26,5 @@ target
 /target
 
 # Project Specific
-/test/config.json
-/test/old_config.json
+test/config.json
+test/old_config.json
