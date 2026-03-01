@@ -14,6 +14,7 @@ struct Args {
 #[derive(Serialize, Deserialize, Debug)]
 struct Config {
     source_url: String,
+    time_to_wait: u64,
 }
 
 impl Config {
@@ -67,9 +68,14 @@ impl Script {
 fn main() {
     let args: Args = Args::parse();
     let conf_path_string: String = args.config_path.unwrap();
-    let deserialized_config: Config = Config::from_path_string(conf_path_string);
-    let script = Script::from_source_url(deserialized_config.source_url);
-    println!("Script Object: {:?}", script)
+
+    while true {
+        let deserialized_config: Config = Config::from_path_string(String::from(&conf_path_string));
+        let script: Script = Script::from_source_url(String::from(&deserialized_config.source_url));
+        std::thread::sleep(std::time::Duration::from_secs(
+            deserialized_config.time_to_wait,
+        ));
+    }
 }
 
 mod tests {
