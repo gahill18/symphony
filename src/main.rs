@@ -56,7 +56,7 @@ impl Script {
             .last_outputs
             .iter()
             .map(|o| o.status)
-            .any(|o| o.success());
+            .all(|o| o.success());
     }
 
     fn execute(&mut self) -> () {
