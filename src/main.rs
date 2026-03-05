@@ -51,6 +51,7 @@ impl Script {
         Script::from_lines(lines)
     }
 
+    /* Return true if all commands ran succesfully on last execute() call, otherwise return false. */
     fn was_success(&self) -> bool {
         return self
             .last_outputs
@@ -59,6 +60,7 @@ impl Script {
             .all(|o| o.success());
     }
 
+    /* Execute all commands stored in the cmds field, saving outputs to the last_outputs field */
     fn execute(&mut self) -> () {
         let mut outputs: Vec<Output> = Vec::new();
         for c in self.cmds.iter() {
