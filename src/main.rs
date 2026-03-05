@@ -1,6 +1,6 @@
 use std::fs;
 use std::path::PathBuf;
-use std::process::{Command, Output};
+use std::process::{Command, ExitStatus, Output};
 
 use clap::Parser;
 use serde::{Deserialize, Serialize};
@@ -51,7 +51,15 @@ impl Script {
         Script::from_lines(lines)
     }
 
-    fn execute(&mut self) -> Result<(), Box<dyn std::error::Error>> {
+    fn was_success(&self) -> bool {
+        return self
+            .last_outputs
+            .iter()
+            .map(|o| o.status)
+            .all(|o| o.success());
+    }
+
+    fn execute(&mut self) -> () {
         let mut outputs: Vec<Output> = Vec::new();
         for c in self.cmds.iter() {
             // TODO: Support non-sh scripts
@@ -64,7 +72,7 @@ impl Script {
             outputs.push(output);
         }
         self.last_outputs = outputs;
-        return Ok(());
+        return ();
     }
 }
 
@@ -77,11 +85,14 @@ fn main() {
         let deserialized_config: Config = Config::from_path_string(String::from(&conf_path_string));
         let mut script: Script =
             Script::from_source_url(String::from(&deserialized_config.source_url));
+
         std::thread::sleep(std::time::Duration::from_secs(
             deserialized_config.time_to_wait,
         ));
-        loop_continue = script.execute().is_ok();
-        println!("{:?}", script);
+        script.execute();
+        loop_continue = script.was_success();
+
+        dbg!("{:?}", script);
     }
 }
 
