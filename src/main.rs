@@ -70,7 +70,7 @@ impl Script {
                 .arg("-c")
                 .arg(c)
                 .output()
-                .expect("failed");
+                .expect(&format!("command {:?} failed", c));
             outputs.push(output);
         }
         self.last_outputs = outputs;
