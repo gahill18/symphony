@@ -51,15 +51,6 @@ impl Script {
         Script::from_lines(lines)
     }
 
-    /* Return true if all commands ran succesfully on last execute() call, otherwise return false. */
-    fn was_success(&self) -> bool {
-        return self
-            .last_outputs
-            .iter()
-            .map(|o| o.status)
-            .all(|o| o.success());
-    }
-
     /* Execute all commands stored in the cmds field, saving outputs to the last_outputs field */
     fn execute(&mut self) -> () {
         let mut outputs: Vec<Output> = Vec::new();
@@ -75,6 +66,15 @@ impl Script {
         }
         self.last_outputs = outputs;
         return ();
+    }
+
+    /* Return true if all commands ran succesfully on last execute() call, otherwise return false. */
+    fn was_success(&self) -> bool {
+        return self
+            .last_outputs
+            .iter()
+            .map(|o| o.status)
+            .all(|o| o.success());
     }
 }
 
@@ -98,9 +98,91 @@ fn main() {
     }
 }
 
+#[cfg(test)]
 mod tests {
+    use crate::{Config, Script};
+    use std::process::Output;
+
     #[test]
     fn sanity_check() {
         assert!(true);
+    }
+
+    #[test]
+    fn config_from_path_str() {
+        let path_string: String = String::from("./test/basic_config.json");
+        let config: Config = Config::from_path_string(path_string);
+        assert_eq!(config.time_to_wait, 5);
+        assert_eq!(
+            config.source_url,
+            "https://github.com/gahill18/symphony/raw/refs/heads/main/test/basic_instructions.sh"
+        );
+    }
+
+    #[test]
+    fn script_from_lines() {
+        let lines: Vec<&str> = vec!["whoami", "ls", "ps"];
+        let cmds: Vec<String> = lines.iter().map(|&x| String::from(x)).collect();
+        let script: Script = Script::from_lines(lines);
+        let last_outputs: Vec<Output> = vec![];
+
+        assert_eq!(cmds, script.cmds);
+        assert_eq!(last_outputs, script.last_outputs);
+    }
+
+    #[test]
+    fn script_from_source_url() {
+        let src_url: String = String::from(
+            "https://github.com/gahill18/symphony/raw/refs/heads/main/test/basic_instructions.sh",
+        );
+        let script: Script = Script::from_source_url(src_url);
+        let cmds: Vec<String> = vec!["echo \"test instructions\"", "echo \"second line\""]
+            .iter()
+            .map(|&x| String::from(x))
+            .collect();
+        let last_outputs: Vec<Output> = vec![];
+
+        assert_eq!(cmds, script.cmds);
+        assert_eq!(last_outputs, script.last_outputs);
+    }
+
+    #[test]
+    fn script_execute() {
+        let src_url: String = String::from(
+            "https://github.com/gahill18/symphony/raw/refs/heads/main/test/basic_instructions.sh",
+        );
+        let mut script: Script = Script::from_source_url(src_url);
+        script.execute();
+
+        let correct_last_stdouts: Vec<String> = vec!["test instructions\n", "second line\n"]
+            .iter()
+            .map(|&x| String::from(x))
+            .collect();
+        let actual_last_stdouts: Vec<_> = script
+            .last_outputs
+            .iter()
+            .map(|x| String::from_utf8_lossy(&x.stdout))
+            .collect();
+
+        assert_eq!(correct_last_stdouts, actual_last_stdouts);
+    }
+
+    #[test]
+    fn script_was_success() {
+        let successful_src_url: String = String::from(
+            "https://github.com/gahill18/symphony/raw/refs/heads/main/test/basic_instructions.sh",
+        );
+        let failed_src_url: String = String::from(
+            "https://github.com/gahill18/symphony/raw/refs/heads/main/test/fail_instructions.sh",
+        );
+
+        let mut successful_script: Script = Script::from_source_url(successful_src_url);
+        successful_script.execute();
+
+        let mut failed_script: Script = Script::from_source_url(failed_src_url);
+        failed_script.execute();
+
+        assert!(successful_script.was_success());
+        assert!(!failed_script.was_success());
     }
 }
