@@ -17,8 +17,14 @@ jobs:
     steps:
     - uses: actions/checkout@v4
     - name: Clippy
+      permissions:
+        contents: read
       run: cargo clippy --verbose
     - name: Build
+      permissions:
+        contents: read
       run: cargo build --verbose
     - name: Run tests
+      permissions:
+        contents: read
       run: cargo test --verbose
