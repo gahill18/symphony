@@ -17,10 +17,36 @@ struct Config {
 }
 
 impl Config {
-    fn from_path_string(ps: String) -> Config {
-        let conf_contents: String = fs::read_to_string(&PathBuf::from(ps)).unwrap();
-        let deserialized_config: Config = serde_json::from_str(&conf_contents).unwrap();
+    /* Build a Config object from a direct string input */
+    fn from_string(string: String) -> Config {
+        let deserialized_config: Config = match serde_json::from_str(&string) {
+            Ok(dc) => dc,
+            Err(e) => panic!(
+                "failed to deserialize config from {}\nThrew error \"{}\"",
+                string, e
+            ),
+        };
         return deserialized_config;
+    }
+
+    /* Build a Config object read in from a file */
+    fn from_path_string(ps: String) -> Config {
+        let conf_string: String = match fs::read_to_string(&PathBuf::from(&ps)) {
+            Ok(cs) => cs,
+            Err(e) => panic!("Failed to read string from {}\nThrew error \"{}\"", ps, e),
+        };
+        return Config::from_string(conf_string);
+    }
+
+    /* Build a Config object read in from a url */
+    fn from_url(src_url: String) -> Config {
+        let response = reqwest::blocking::get(src_url).unwrap();
+        let conf_string: String = if response.status() != 200 {
+            panic!("Failed to get a proper response");
+        } else {
+            response.text().unwrap()
+        };
+        return Config::from_string(conf_string);
     }
 }
 
@@ -123,9 +149,35 @@ mod tests {
     }
 
     #[test]
-    fn config_from_path_str() {
+    fn config_from_string() {
+        let string: String = String::from(
+            "{\n\t\"source_url\": \"https://github.com/gahill18/symphony/raw/refs/heads/main/test/basic_instructions.sh\",\n\t\"time_to_wait\": 5\n}",
+        );
+        let config: Config = Config::from_string(string);
+        assert_eq!(config.time_to_wait, 5);
+        assert_eq!(
+            config.source_url,
+            "https://github.com/gahill18/symphony/raw/refs/heads/main/test/basic_instructions.sh"
+        );
+    }
+
+    #[test]
+    fn config_from_path_string() {
         let path_string: String = String::from("./test/basic_config.json");
         let config: Config = Config::from_path_string(path_string);
+        assert_eq!(config.time_to_wait, 5);
+        assert_eq!(
+            config.source_url,
+            "https://github.com/gahill18/symphony/raw/refs/heads/main/test/basic_instructions.sh"
+        );
+    }
+
+    #[test]
+    fn config_from_url() {
+        let src_url = String::from(
+            "https://github.com/gahill18/symphony/raw/refs/heads/main/test/basic_config.json",
+        );
+        let config = Config::from_url(src_url);
         assert_eq!(config.time_to_wait, 5);
         assert_eq!(
             config.source_url,
