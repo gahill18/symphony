@@ -13,7 +13,7 @@ struct Args {
 #[derive(Serialize, Deserialize, Debug)]
 struct Config {
     source_url: String,
-    time_to_wait: u64,
+    time_to_wait: Option<u64>,
 }
 
 impl Config {
@@ -40,9 +40,9 @@ impl Config {
 
     /* Build a Config object read in from a url */
     fn from_url(src_url: String) -> Config {
-        let response = reqwest::blocking::get(src_url).unwrap();
+        let response = reqwest::blocking::get(&src_url).unwrap();
         let conf_string: String = if response.status() != 200 {
-            panic!("Failed to get a proper response");
+            panic!("Failed to get a proper response from url {}", src_url);
         } else {
             response.text().unwrap()
         };
@@ -133,7 +133,9 @@ fn main() {
         loop_continue = script.was_success();
         dbg!("{:?}", script);
 
-        std::thread::sleep(std::time::Duration::from_secs(config.time_to_wait));
+        if let Some(ttw) = config.time_to_wait {
+            std::thread::sleep(std::time::Duration::from_secs(ttw));
+        }
     }
 }
 
@@ -154,7 +156,7 @@ mod tests {
             "{\n\t\"source_url\": \"https://github.com/gahill18/symphony/raw/refs/heads/main/test/basic_instructions.sh\",\n\t\"time_to_wait\": 5\n}",
         );
         let config: Config = Config::from_string(string);
-        assert_eq!(config.time_to_wait, 5);
+        assert_eq!(config.time_to_wait, Some(5));
         assert_eq!(
             config.source_url,
             "https://github.com/gahill18/symphony/raw/refs/heads/main/test/basic_instructions.sh"
@@ -165,7 +167,7 @@ mod tests {
     fn config_from_path_string() {
         let path_string: String = String::from("./test/basic_config.json");
         let config: Config = Config::from_path_string(path_string);
-        assert_eq!(config.time_to_wait, 5);
+        assert_eq!(config.time_to_wait, Some(5));
         assert_eq!(
             config.source_url,
             "https://github.com/gahill18/symphony/raw/refs/heads/main/test/basic_instructions.sh"
@@ -178,7 +180,7 @@ mod tests {
             "https://github.com/gahill18/symphony/raw/refs/heads/main/test/basic_config.json",
         );
         let config = Config::from_url(src_url);
-        assert_eq!(config.time_to_wait, 5);
+        assert_eq!(config.time_to_wait, Some(5));
         assert_eq!(
             config.source_url,
             "https://github.com/gahill18/symphony/raw/refs/heads/main/test/basic_instructions.sh"
