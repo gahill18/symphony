@@ -1,1 +1,2 @@
-echo "hello world!"
+uname -m
+sleep 5
