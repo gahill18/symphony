@@ -119,21 +119,21 @@ mod script {
 use script::Script;
 fn main() {
     let args: Args = Args::parse();
-    let conf_path_string: String = args.config_path.unwrap();
+    let config: Config = match args.config_path {
+        Some(cp) => Config::from_path_string(cp),
+        None => Config::from_url(String::from(
+            "https://github.com/gahill18/symphony/raw/refs/heads/main/test/default_config.json",
+        )),
+    };
     let mut loop_continue: bool = true;
 
     while loop_continue {
-        let deserialized_config: Config = Config::from_path_string(String::from(&conf_path_string));
-        let mut script: Script =
-            Script::from_source_url(String::from(&deserialized_config.source_url));
-
-        std::thread::sleep(std::time::Duration::from_secs(
-            deserialized_config.time_to_wait,
-        ));
+        let mut script: Script = Script::from_source_url(String::from(&config.source_url));
         script.execute();
         loop_continue = script.was_success();
-
         dbg!("{:?}", script);
+
+        std::thread::sleep(std::time::Duration::from_secs(config.time_to_wait));
     }
 }
 
