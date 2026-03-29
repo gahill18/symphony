@@ -53,21 +53,21 @@ impl Script {
     }
 
     /* Execute all commands stored in the cmds field, saving outputs to the last_outputs field */
-    pub fn execute_async(&mut self) -> () {
-        let mut outputs: Vec<Output> = Vec::new();
-        for c in self.cmds.iter() {
-            // TODO: Support non-sh scripts
-            // TODO: Async Child Process Spawn
-            let output: Output = Command::new("sh")
-                .arg("-c")
-                .arg(c)
-                .output()
-                .expect(&format!("command {:?} failed", c));
-            outputs.push(output);
-        }
-        self.last_outputs = outputs;
-        return ();
-    }
+    // pub fn execute_async(&mut self) -> () {
+    //     let mut outputs: Vec<Output> = Vec::new();
+    //     for c in self.cmds.iter() {
+    //         // TODO: Support non-sh scripts
+    //         // TODO: Async Child Process Spawn
+    //         let output: Output = Command::new("sh")
+    //             .arg("-c")
+    //             .arg(c)
+    //             .output()
+    //             .expect(&format!("command {:?} failed", c));
+    //         outputs.push(output);
+    //     }
+    //     self.last_outputs = outputs;
+    //     return ();
+    // }
 
     /* Return true if all commands ran succesfully on last execute() call, otherwise return false. */
     pub fn was_success(&self) -> bool {

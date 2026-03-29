@@ -65,7 +65,6 @@ fn main() {
             "https://github.com/gahill18/symphony/raw/refs/heads/main/test/default_config.json",
         )),
     };
-    let arch = architecture::get_sys_architecture();
 
     let mut loop_continue: bool = true;
     while loop_continue {

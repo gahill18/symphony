@@ -1,4 +1,5 @@
 use crate::Config;
+use crate::architecture;
 use crate::script::Script;
 use std::process::Output;
 
@@ -103,4 +104,11 @@ fn script_was_success() {
 
     assert!(successful_script.was_success());
     assert!(!failed_script.was_success());
+}
+
+#[test]
+fn architecture_get_sys_architecture() {
+    let arch = architecture::get_sys_architecture();
+    // Currently only testing that the function call didn't panic
+    assert!(true);
 }
