@@ -1,8 +1,15 @@
+use clap::Parser;
+use serde::{Deserialize, Serialize};
 use std::fs;
 use std::path::PathBuf;
 
-use clap::Parser;
-use serde::{Deserialize, Serialize};
+mod architecture;
+
+mod script;
+use script::Script;
+
+#[cfg(test)]
+mod tests;
 
 #[derive(Parser, Debug)]
 struct Args {
@@ -50,100 +57,6 @@ impl Config {
     }
 }
 
-mod script {
-    use std::process::{Command, Output};
-    #[derive(Debug)]
-    pub struct Script {
-        cmds: Vec<String>,
-        last_outputs: Vec<Output>,
-    }
-
-    impl Script {
-        /* Build a Script object from a list of strings */
-        pub fn from_lines(lines: Vec<&str>) -> Script {
-            let cmds: Vec<String> = lines.iter().map(|&l| String::from(l)).collect();
-            let last_outputs: Vec<Output> = Vec::new();
-            return Script { cmds, last_outputs };
-        }
-
-        /* Use HTTP Get to build a Script object from a source URL argument */
-        pub fn from_source_url(src_url: String) -> Script {
-            let response = reqwest::blocking::get(src_url).unwrap();
-            let text: String = if response.status() != 200 {
-                panic!("Failed to get a proper response");
-            } else {
-                response.text().unwrap()
-            };
-            let lines: Vec<&str> = text.lines().collect();
-            Script::from_lines(lines)
-        }
-
-        /* Return a copy of the commands vector */
-        pub fn cmds(&self) -> Vec<String> {
-            return self.cmds.clone();
-        }
-
-        /* Return a copy of the commands vector */
-        pub fn last_outputs(&self) -> Vec<Output> {
-            return self.last_outputs.clone();
-        }
-
-        /* Execute all commands stored in the cmds field, saving outputs to the last_outputs field */
-        pub fn execute(&mut self) -> () {
-            let mut outputs: Vec<Output> = Vec::new();
-            for c in self.cmds.iter() {
-                // TODO: Support non-sh scripts
-                // TODO: Async Child Process Spawn
-                let output: Output = Command::new("sh")
-                    .arg("-c")
-                    .arg(c)
-                    .output()
-                    .expect(&format!("command {:?} failed", c));
-                outputs.push(output);
-            }
-            self.last_outputs = outputs;
-            return ();
-        }
-
-        /* Return true if all commands ran succesfully on last execute() call, otherwise return false. */
-        pub fn was_success(&self) -> bool {
-            return self
-                .last_outputs
-                .iter()
-                .map(|o| o.status)
-                .all(|o| o.success());
-        }
-    }
-}
-mod architecture {
-    use std::process::{Command, Output};
-
-    pub enum Architecture {
-        X86_64,
-        ARM,
-        UNDEF,
-    }
-
-    /* Use uname -m to get the current system architecture */
-    pub fn get_sys_architecture() -> Architecture {
-        let output: Output = Command::new("sh")
-            .arg("-c")
-            .arg("uname -m")
-            .output()
-            .expect("Failed to obtain system architecture");
-        if let Ok(stdout_text) = String::from_utf8(output.stdout) {
-            dbg!("uname -m output: {}", &stdout_text);
-            return match stdout_text.as_str() {
-                "x86_64\n" => Architecture::X86_64,
-                _ => Architecture::UNDEF,
-            };
-        } else {
-            todo!("implement get_system_architecture()");
-        }
-    }
-}
-
-use script::Script;
 fn main() {
     let args: Args = Args::parse();
     let config: Config = match args.config_path {
@@ -164,120 +77,5 @@ fn main() {
         if let Some(ttw) = config.time_to_wait {
             std::thread::sleep(std::time::Duration::from_secs(ttw));
         }
-    }
-}
-
-#[cfg(test)]
-mod tests {
-    use crate::Config;
-    use crate::script::Script;
-    use std::process::Output;
-
-    #[test]
-    fn sanity_check() {
-        assert!(true);
-    }
-
-    #[test]
-    fn config_from_string() {
-        let string: String = String::from(
-            "{\n\t\"source_url\": \"https://github.com/gahill18/symphony/raw/refs/heads/main/test/basic_instructions.sh\",\n\t\"time_to_wait\": 5\n}",
-        );
-        let config: Config = Config::from_string(string);
-        assert_eq!(config.time_to_wait, Some(5));
-        assert_eq!(
-            config.source_url,
-            "https://github.com/gahill18/symphony/raw/refs/heads/main/test/basic_instructions.sh"
-        );
-    }
-
-    #[test]
-    fn config_from_path_string() {
-        let path_string: String = String::from("./test/basic_config.json");
-        let config: Config = Config::from_path_string(path_string);
-        assert_eq!(config.time_to_wait, Some(5));
-        assert_eq!(
-            config.source_url,
-            "https://github.com/gahill18/symphony/raw/refs/heads/main/test/basic_instructions.sh"
-        );
-    }
-
-    #[test]
-    fn config_from_url() {
-        let src_url = String::from(
-            "https://github.com/gahill18/symphony/raw/refs/heads/main/test/basic_config.json",
-        );
-        let config = Config::from_url(src_url);
-        assert_eq!(config.time_to_wait, Some(5));
-        assert_eq!(
-            config.source_url,
-            "https://github.com/gahill18/symphony/raw/refs/heads/main/test/basic_instructions.sh"
-        );
-    }
-
-    #[test]
-    fn script_from_lines() {
-        let lines: Vec<&str> = vec!["whoami", "ls", "ps"];
-        let cmds: Vec<String> = lines.iter().map(|&x| String::from(x)).collect();
-        let script: Script = Script::from_lines(lines);
-        let last_outputs: Vec<Output> = vec![];
-
-        assert_eq!(cmds, script.cmds());
-        assert_eq!(last_outputs, script.last_outputs());
-    }
-
-    #[test]
-    fn script_from_source_url() {
-        let src_url: String = String::from(
-            "https://github.com/gahill18/symphony/raw/refs/heads/main/test/basic_instructions.sh",
-        );
-        let script: Script = Script::from_source_url(src_url);
-        let cmds: Vec<String> = vec!["echo \"test instructions\"", "echo \"second line\""]
-            .iter()
-            .map(|&x| String::from(x))
-            .collect();
-        let last_outputs: Vec<Output> = vec![];
-
-        assert_eq!(cmds, script.cmds());
-        assert_eq!(last_outputs, script.last_outputs());
-    }
-
-    #[test]
-    fn script_execute() {
-        let src_url: String = String::from(
-            "https://github.com/gahill18/symphony/raw/refs/heads/main/test/basic_instructions.sh",
-        );
-        let mut script: Script = Script::from_source_url(src_url);
-        script.execute();
-
-        let correct_last_stdouts: Vec<String> = vec!["test instructions\n", "second line\n"]
-            .iter()
-            .map(|&x| String::from(x))
-            .collect();
-        let actual_last_outputs: Vec<Output> = script.last_outputs();
-        let actual_last_stdouts: Vec<_> = actual_last_outputs
-            .iter()
-            .map(|x| String::from_utf8_lossy(&x.stdout))
-            .collect();
-        assert_eq!(correct_last_stdouts, actual_last_stdouts);
-    }
-
-    #[test]
-    fn script_was_success() {
-        let successful_src_url: String = String::from(
-            "https://github.com/gahill18/symphony/raw/refs/heads/main/test/basic_instructions.sh",
-        );
-        let failed_src_url: String = String::from(
-            "https://github.com/gahill18/symphony/raw/refs/heads/main/test/fail_instructions.sh",
-        );
-
-        let mut successful_script: Script = Script::from_source_url(successful_src_url);
-        successful_script.execute();
-
-        let mut failed_script: Script = Script::from_source_url(failed_src_url);
-        failed_script.execute();
-
-        assert!(successful_script.was_success());
-        assert!(!failed_script.was_success());
     }
 }
