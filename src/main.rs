@@ -22,23 +22,11 @@ fn main() {
     let mut inst: Instructions = match args.instructions_url {
         Some(cp) => Instructions::from_url(cp),
         None => Instructions::from_url(String::from(
-            "https://github.com/gahill18/symphony/raw/refs/heads/refactor-instruction-formatting-and-parsing/test/default.sfn",
+            "https://github.com/gahill18/symphony/raw/refs/heads/main/test/default.sfn",
         )),
     };
 
     while inst.run() {
         inst = inst.get_next_instructions();
     };
-
-    // let mut loop_continue: bool = true;
-    // while loop_continue {
-    //     let mut script: Script = Script::from_source_url(String::from(&config.source_url));
-    //     script.execute();
-    //     loop_continue = script.was_success();
-    //     dbg!("{:?}", script);
-
-    //     if let Some(ttw) = config.time_to_wait {
-    //         std::thread::sleep(std::time::Duration::from_secs(ttw));
-    //     }
-    // }
 }
