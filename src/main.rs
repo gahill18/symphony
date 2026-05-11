@@ -8,6 +8,8 @@ mod architecture;
 mod script;
 use script::Script;
 
+mod instructions;
+
 #[cfg(test)]
 mod tests;
 

@@ -1,0 +1,4 @@
+{
+    "mode": {"ExecScript": {"c": "echo HelloWorld"}},
+    "repeats": 10
+}

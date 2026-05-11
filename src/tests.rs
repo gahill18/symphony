@@ -1,6 +1,7 @@
 use crate::Config;
 use crate::architecture;
 use crate::script::Script;
+use crate::instructions::Instructions;
 use std::process::Output;
 
 #[test]
@@ -110,5 +111,27 @@ fn script_was_success() {
 fn architecture_get_sys_architecture() {
     let arch = architecture::get_sys_architecture();
     // Currently only testing that the function call didn't panic
+    assert!(true);
+    todo!("architecture_get_sys_architecture");
+}
+
+#[test]
+fn instructions_from_path_string() {
+    let ps: String = String::from("./test/default.sfn");
+    let inst: Instructions = Instructions::from_path_string(ps);
+    todo!("instructions_from_path_string");
+}
+
+#[test]
+fn instructions_from_url() {
+    todo!("instructions_from_url");
+}
+
+#[test]
+fn instructions_run() {
+    let ps: String = String::from("./test/default.sfn");
+    let inst: Instructions = Instructions::from_path_string(ps);
+    inst.run();
+    // Confirm no panic
     assert!(true);
 }
