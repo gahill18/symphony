@@ -1,44 +1,7 @@
-use crate::Config;
 use crate::architecture;
 use crate::script::Script;
+use crate::instructions::Instructions;
 use std::process::Output;
-
-#[test]
-fn config_from_string() {
-    let string: String = String::from(
-        "{\n\t\"source_url\": \"https://github.com/gahill18/symphony/raw/refs/heads/main/test/basic_instructions.sh\",\n\t\"time_to_wait\": 5\n}",
-    );
-    let config: Config = Config::from_string(string);
-    assert_eq!(config.time_to_wait, Some(5));
-    assert_eq!(
-        config.source_url,
-        "https://github.com/gahill18/symphony/raw/refs/heads/main/test/basic_instructions.sh"
-    );
-}
-
-#[test]
-fn config_from_path_string() {
-    let path_string: String = String::from("./test/basic_config.json");
-    let config: Config = Config::from_path_string(path_string);
-    assert_eq!(config.time_to_wait, Some(5));
-    assert_eq!(
-        config.source_url,
-        "https://github.com/gahill18/symphony/raw/refs/heads/main/test/basic_instructions.sh"
-    );
-}
-
-#[test]
-fn config_from_url() {
-    let src_url = String::from(
-        "https://github.com/gahill18/symphony/raw/refs/heads/main/test/basic_config.json",
-    );
-    let config = Config::from_url(src_url);
-    assert_eq!(config.time_to_wait, Some(5));
-    assert_eq!(
-        config.source_url,
-        "https://github.com/gahill18/symphony/raw/refs/heads/main/test/basic_instructions.sh"
-    );
-}
 
 #[test]
 fn script_from_lines() {
@@ -109,6 +72,32 @@ fn script_was_success() {
 #[test]
 fn architecture_get_sys_architecture() {
     let arch = architecture::get_sys_architecture();
-    // Currently only testing that the function call didn't panic
+    // Confirm no panic
+    assert!(true)
+}
+
+#[test]
+fn instructions_from_path_string() {
+    let ps: String = String::from("./test/default.sfn");
+    let inst: Instructions = Instructions::from_path_string(ps);
+    // Confirm no panic
+    assert!(true)
+}
+
+#[test]
+fn instructions_from_url() {
+    let url: String = String::from("https://github.com/gahill18/symphony/raw/refs/heads/refactor-instruction-formatting-and-parsing/test/default.sfn");
+    let inst: Instructions = Instructions::from_url(url);
+    // Confirm no panic
+    assert!(true);
+}
+
+#[test]
+fn instructions_run() {
+    let ps: String = String::from("./test/default.sfn");
+    let inst: Instructions = Instructions::from_path_string(ps);
+    // Warning - by default this will infinitely loop! Need to Ctrl-C
+    inst.run();
+    // Confirm no panic
     assert!(true);
 }

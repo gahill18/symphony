@@ -13,6 +13,13 @@ impl Script {
         return Script { cmds, last_outputs };
     }
 
+    /* Build a script object from a single raw string */
+    pub fn from_str(s: &str) -> Script {
+        let binding: String = String::from(s);
+        let lines: Vec<&str> = binding.split('\n').collect();
+        return Script::from_lines(lines)
+    }
+
     /* Use HTTP Get to build a Script object from a source URL argument */
     pub fn from_source_url(src_url: String) -> Script {
         let response = reqwest::blocking::get(src_url).unwrap();
