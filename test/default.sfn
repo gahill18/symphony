@@ -1,4 +1,5 @@
 {
     "mode": {"ExecScript": {"c": "echo HelloWorld"}},
-    "repeats": 10
+    "repeats": 10,
+    "nextInstSrc": "https://github.com/gahill18/symphony/raw/refs/heads/refactor-instruction-formatting-and-parsing/test/default.sfn"
 }

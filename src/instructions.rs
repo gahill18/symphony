@@ -51,7 +51,8 @@ type Repeats = u64;
 #[derive(Serialize, Deserialize, Debug)]
 pub struct Instructions {
     mode: Mode,
-    repeats: Repeats
+    repeats: Repeats,
+    nextInstSrc: String,
 }
 
 impl Instructions {
@@ -87,11 +88,15 @@ impl Instructions {
         return Instructions::from_string(inst_string);
     }
 
-    pub fn run(self) -> () {
-        for i in 0..self.repeats {
+    pub fn run(&self) -> bool {
+        for i in 0..self.repeats.clone() {
             self.mode.clone().run()
         }
 
-        return ();
+        return true;
+    }
+
+    pub fn get_next_instructions(self) -> Instructions {
+        return Instructions::from_url(self.nextInstSrc)
     }
 }
