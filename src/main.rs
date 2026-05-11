@@ -20,7 +20,7 @@ struct Args {
 fn main() {
     let args: Args = Args::parse();
     let mut inst: Instructions = match args.instructions_url {
-        Some(cp) => Instructions::from_path_string(cp),
+        Some(cp) => Instructions::from_url(cp),
         None => Instructions::from_url(String::from(
             "https://github.com/gahill18/symphony/raw/refs/heads/refactor-instruction-formatting-and-parsing/test/default.sfn",
         )),
