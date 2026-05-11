@@ -96,6 +96,7 @@ fn instructions_from_url() {
 fn instructions_run() {
     let ps: String = String::from("./test/default.sfn");
     let inst: Instructions = Instructions::from_path_string(ps);
+    // Warning - by default this will infinitely loop! Need to Ctrl-C
     inst.run();
     // Confirm no panic
     assert!(true);
