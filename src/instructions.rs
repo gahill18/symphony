@@ -32,7 +32,7 @@ impl Mode {
             Mode::ExecScript {ref c} => {
                 let mut script: Script = Script::from_str(&c);
                 script.execute();
-                println!("{:?}", script)
+                dbg!("{:?}", script);
             },
             Mode::Transmit {c, d, p} => todo!("impl Transmit"),
             Mode::Listen {p, pt} => todo!("impl Listen"),
